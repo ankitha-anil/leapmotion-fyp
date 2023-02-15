@@ -5,7 +5,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script src="http://js.leapmotion.com/leap-1.1.0.js"></script>
 <script src="http://js.leapmotion.com/leap-plugins-0.1.12.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inria+Serif&family=Inria+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><link href="https://fonts.googleapis.com/css2?family=Inria+Serif&family=Inria+Sans:wght@400;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" type="text/css" href="main.css">
 
@@ -14,30 +14,73 @@
 
 <body>
     <div id="heading-banner">
+        <button id ="info" class="info"><i class="fa info fa-info-circle"></i></button>
         <h2> Theremin with Leap Motion</h2>
-        <button id="info" class = "button">About</button>
+        <button id="instruction"class="info"><i class="fa info fa-question-circle"></i></button>
     </div>
+    <!-- The Modal -->
+    <div id="InfoModal" class="modal">
+    <!-- Modal content -->
+        <div class="modal-content">
+            <h2>About Leap Motion Theremin</h2>
+            <div class="modal-inside">
+                <div>
+                    <p>A theremin is a musical instrument that is played without touching it. It detects the distance between the player's hands and the instrument's two antennae, which controls the pitch and volume of the sound. </p>
+                    <p>Leap Motion is a gesture-based control technology for digital devices. The Leap Motion sensor is utilized in the theremin project to track the player's hand motions and translate them into the sounds produced by the theremin.</p>
+                    <p>This results in a one-of-a-kind and immersive musical experience, allowing the player to operate the instrument in a more intuitive and natural manner.</p>
+                </div>
+                <img src="images/theremin.jpg" alt="Theremin" width="300">
+            </div>
+            <button class="c-button close">Begin</button>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="HelpModal" class="modal">
+        <!-- Modal content -->
+            <div class="modal-content">
+                <h2>Instructions</h2>
+                <div class="modal-inside">
+                    <div>
+                        <p>A theremin is a musical instrument that is played without touching it. It detects the distance between the player's hands and the instrument's two antennae, which controls the pitch and volume of the sound. </p>
+                        <p>Leap Motion is a gesture-based control technology for digital devices. The Leap Motion sensor is utilized in the theremin project to track the player's hand motions and translate them into the sounds produced by the theremin.</p>
+                        <p>This results in a one-of-a-kind and immersive musical experience, allowing the player to operate the instrument in a more intuitive and natural manner.</p>
+                    </div>
+                    <img src="images/theremin.jpg" alt="Theremin" width="300">
+                </div>
+                <button class="c-button close">Begin</button>
+            </div>
+        </div>
     <canvas></canvas>
     <div id="frequency"></div>
     <div id="volume"></div>
     <div id="controls">
-        <div id="record" class="control-class">     
-            <button id="record-button" class = "button">Record</button>
-            <button id="record-stop-button" class = "button">Stop Record</button>
+        <div id="record" class="row">     
+            <button id="record-button" class = "c-button c-button_white-ghost"><i class="fa fa-microphone"></i></button>
+            <button id="record-stop-button" class = "c-button c-button_white-ghost-reverse"><i class="fa fa-stop-circle"></i></button>
         </div>
-        <div id="play-pause" class="control-class">     
-            <button id="play-button" class = "button">Play</button>
-            <button id="stop-button" class = "button">Stop</button>
+        <div class ="vl"></div>
+        <div id="play-pause" class="row">     
+            <button id="play-button" class = "c-button c-button_white-ghost"><i class="fa fa-play"></i></button>
+            <button id="stop-button" class = "c-button c-button_white-ghost-reverse"><i class="fa fa-pause"></i></button>
         </div>
-        <div id="effects" class="control-class">     
-            <button id="effect-1" class = "button">Effect 1</button>
-            <button id="effect-2" class = "button">Effect 2</button>
-            <button id="effect-3" class = "button">Effect 3</button>
-            <button id="effect-4" class = "button">Effect 4</button>
+        <div class ="vl"></div>
+        <div id="effects" class="effect-class">     
+            <div class="column">
+                <button id="effect-1" class = "c-button c-button_white-ghost-reverse">Effect 1</button>
+                <button id="effect-2" class = "c-button c-button_white-ghost">Effect 2</button>
+            </div>
+            <div class="column">
+                <button id="effect-3" class = "c-button c-button_white-ghost">Effect 3</button>
+                <button id="effect-4" class = "c-button c-button_white-ghost">Effect 4</button>
+            </div>
         </div>
     </div>
-    
+    <div class="label">
+        <div class="row">Recording</div>
+        <div class="row">Controls</div>
+        <div class="row">Effects</div>
+    </div>
 <script src="main.js"></script>
 </body>
-
 </html>

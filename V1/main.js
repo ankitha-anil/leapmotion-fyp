@@ -1,56 +1,109 @@
 
-const synthSelector = document.getElementById("synth-selector");
 const playButton = document.getElementById("play-button");
-const noteSlider = document.getElementById("note-slider");
-const noteLabel = document.getElementById("note-label");
+const stopButton = document.getElementById('stop-button');
+const recordButton = document.getElementById('record-button');
+const recordStopButton = document.getElementById('record-stop-button');
 
-let synth = new Tone.Synth().toDestination();
-let noteValue = "C3";
-
-// const reverb = new Tone.Freeverb().toDestination();
-// reverb.dampening = 1000;
-//   // create a delay effect
-// const delay = new Tone.PingPongDelay("16n", 0.6).toDestination();
-
-// // create a filter effectp
-// const filter = new Tone.Filter(2000, "lowpass").toDestination();
-
-// // create a panning effect
-// const panner = new Tone.Panner(-1).toDestination();
-
-// // connect the synth to the effects
-// synth.connect(reverb);
-// synth.connect(delay);
-// synth.connect(filter);
-// synth.connect(panner);
-
-
-playButton.addEventListener("click", () => {
-    
-});
-
-const mapNote = (value) => {
-    // set the range of the hand.palmPosition[1] value
-    const minValue = -200;
-    const maxValue = 200;
-    // set the range of the musical notes
-    const minNote = "C1";
-    const maxNote = "C8";
-    // calculate the mapped note
-    const mappedNote =  Tone.Frequency(Tone.Scale.Linear.Map(value, minValue, maxValue, minNote, maxNote).toNote()).value;
-    return mappedNote;
-}
+const recorder = new Tone.Recorder();
+const synth = new Tone.Oscillator({
+    type: "sine",
+    frequency: 440,
+    volume: -20
+}).connect(recorder).toDestination();
 
 const mapVolume = (value) => {
     // set the range of the hand.stabilizedPalmPosition[0] value
-    const minValue = -200;
+    const minValue = 70;
     const maxValue = 200;
     // set the range of the volume value
-    const minVolume = -60;
-    const maxVolume = 30;
+    const minVolume = -10;
+    const maxVolume = -100;
     // calculate the mapped volume
     return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
 }
+
+function getFrequency(handPositionX, handPositionY) {
+  const minX = 50; // minimum value for X axis
+  const maxX = 200; // maximum value for X axis
+  const minY = 70; // minimum value for Y axis
+  const maxY = 500; // maximum value for Y axis
+  
+  // normalize the X axis
+  let normalizedX = (handPositionX - minX) * 2 / (maxX - minX);
+  //normalizedX = Math.max(0, Math.min(1, normalizedX));
+  console.log("x: " + normalizedX)
+
+  // normalize the Y axis
+  let normalizedY = (handPositionY - minY) * 2 / (maxY - minY);
+  //normalizedY = Math.max(0, Math.min(1, normalizedY));
+  console.log("y: " + normalizedY)
+  // calculate the frequency based on the normalized values
+  let frequency = 100 + 64 * Math.pow(2, (normalizedY + normalizedX));
+  console.log("frequency: "+ frequency)
+  return frequency;
+}
+//synth.connect(gainNode);
+const getFreqname = (value) => {
+  if(value<=130){
+    return "C3"
+  }
+  else if(value>130 && value<= 146){
+    return "D3"
+  }
+  else if(value>146 && value<= 164){
+    return "E3"
+  }
+  else if(value>164 && value<= 174){
+    return "F3"
+  }
+  else if(value>174 && value<= 196){
+    return "G3"
+  }
+  else if(value>196 && value<= 220){
+    return "A3"
+  }
+  else if(value>220 && value<= 246){
+    return "B3"
+  }
+  else if(value>246 && value<= 261){
+    return "C4"
+  }
+  else if(value>261 && value<= 293){
+    return "D4"
+  }
+  else if(value>293 && value<= 329){
+    return "E4"
+  }
+  else if(value>329 && value<= 349){
+    return "F4"
+  }
+  else if(value>349 && value<= 392){
+    return "G4"
+  }
+  else if(value>392 && value<= 440){
+    return "A4"
+  }
+  else if(value>440 && value<= 493){
+    return "B4"
+  }
+}
+
+const reverb = new Tone.Freeverb({dampening: 2000, wet: 0.5, roomSize: 0.9 }).toDestination();
+reverb.dampening = 1000;
+reverb.wet = 0.5;
+reverb.roomSize = 0.9;
+  // create a delay effect
+const delay = new Tone.FeedbackDelay("1n", 0.2).toDestination();
+
+  // create a filter effect
+const filter = new Tone.Filter(1000, "lowpass").toDestination();
+
+  // create a panning effect
+const panner = new Tone.Panner(-0.5).toDestination();
+
+  //  connect the synth to the effects
+synth.connect(reverb);
+
 
 const mapLength = (value) => {
   // set the range of the hand.stabilizedPalmPosition[0] value
@@ -68,40 +121,61 @@ const controller = new Leap.Controller({
     host: "127.0.0.1",
     port: 6437
   });
-  controller.setBackground(true).connect();
+  controller.connect();
 
+     // Listen for frame data from the Leap Motion controller
   controller.on("frame", frame => {
-    // Use the hand data to control the synth's frequency
-    if (frame.hands.length > 0) {
-      const hand = frame.hands[0];
-      const palmPositionY = hand.stabilizedPalmPosition[1];
-// set the frequency of the synth based on the mapped note
-    if(hand.type === "right"){
-          let transposedNote = Tone.Frequency(noteValue).transpose(palmPositionY*0.09);
-          synth.frequency.value = transposedNote;
-          document.getElementById("frequency").innerHTML = `Frequency: ${transposedNote.toNote()}`;
-          const volume = Math.round(hand.stabilizedPalmPosition[0]);
-          synth.volume.value = mapVolume(volume);
-          document.getElementById("volume").innerHTML = `Volume: ${volume}`;
+        //gainNode.gain.rampTo(1, 0.1);
+        for(var i = 0; i < frame.hands.length; i++){
+          var hand = frame.hands[i];
+            if(hand.type === "right"){
+                synth.frequency.value = getFrequency(hand.stabilizedPalmPosition[0], hand.stabilizedPalmPosition[1]);
+               // document.getElementById("frequency").innerHTML = `Frequency: ${getFreqname(synth.frequency.value)}`;
+              }
+            else if(hand.type === "left"){
+                var volume = hand.stabilizedPalmPosition[1];
+                synth.volume.value = mapVolume(hand.stabilizedPalmPosition[1]);
+               // document.getElementById("volume").innerHTML = `Volume: ${mapVolume(synth.volume.value)}`;
+              }
         }
-  }
+    });
 
-    // Use the finger data to control the synth's volume
-    // if (frame.fingers.length > 0) {
-    //   const finger = frame.fingers[0];
-    //   const volume = finger.tipPosition[2];
-    //   synth.volume.value = volume;
-    //   document.getElementById("volume").innerHTML = `Volume: ${volume}`;
-    // }
-  });
+playButton.addEventListener("click", () => {
+        synth.start();
+        Tone.start();
+        playButton.className = "c-button c-button_white-ghost-reverse";
+        stopButton.className = "c-button c-button_white-ghost";
+});
 
-  const stopButton = document.getElementById('stop-button');
-  stopButton.addEventListener('click', () => {
-      Tone.Transport.stop();
-  });
+stopButton.addEventListener('click', () => {
+    synth.stop();
+    playButton.className = "c-button c-button_white-ghost";
+    stopButton.className = "c-button c-button_white-ghost-reverse";
+});
+
+recordButton.addEventListener('click', () => {
+    recorder.start();
+    recordStopButton.className = "c-button c-button_white-ghost";
+    recordButton.className = "c-button c-button_white-ghost-reverse";
+});
+
+recordStopButton.addEventListener('click', () => {
+  recordButton.className = "c-button c-button_white-ghost";
+  recordStopButton.className = "c-button c-button_white-ghost-reverse";
+    // wait for the notes to end and stop the recording
+    setTimeout(async () => {
+      // the recorded audio is returned as a blob
+      const recording = await recorder.stop();
+      // download the recording by creating an anchor element and blob url
+      const url = URL.createObjectURL(recording);
+      const anchor = document.createElement("a");
+      anchor.download = "recording.webm";
+      anchor.href = url;
+      anchor.click();
+    }, 1000);
+});
 
 const canvas = document.querySelector('canvas');
-
 canvas.width = window.outerWidth/1.5;
 canvas.height = window.outerHeight/2;
 
@@ -133,7 +207,7 @@ class Wave {
   draw(c) {
     c.beginPath();
 
-    this.ctx.fillStyle = `rgba(1,1,1,0.04)`;
+    this.ctx.fillStyle = `rgba(1,1,1,0.1)`;
     this.ctx.strokeStyle = `hsl(${this.increment * 20}, 80%, 70%)`;
 
     c.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -152,9 +226,7 @@ class Wave {
 
     this.length = mapLength(synth.frequency.value);
     this.increment -= synth.frequency.value/10000;
-    this.amplitude = synth.volume.value * 5;
-    console.log("freq: "+ this.increment);
-    console.log("length: "+ this.length);
+    this.amplitude = synth.volume.value * 2.5;
   }
 
   animate() {
@@ -162,7 +234,50 @@ class Wave {
   }
 }
 
-const wave = new Wave(canvas, 150, 20, 0.07);
+const wave = new Wave(canvas, 150, 20, 0.03);
 wave.animate();
 
 
+// Get the modal
+var infoModal = document.getElementById("InfoModal");
+var infoBtn = document.getElementById("info");
+var infoSpan = document.getElementsByClassName("close")[0];
+
+// When the user clicks on the button, open the modal 
+infoBtn.onclick = function() {
+  infoModal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+infoSpan.onclick = function() {
+  infoModal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == infoModal) {
+    infoModal.style.display = "none";
+  }
+}
+
+// Get the Help modal
+var helpModal = document.getElementById("HelpModal");
+var helpBtn = document.getElementById("instruction");
+var helpSpan = document.getElementsByClassName("close")[1];
+
+// When the user clicks on the button, open the modal 
+helpBtn.onclick = function() {
+  helpModal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+helpSpan.onclick = function() {
+  helpModal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == helpModal) {
+    helpModal.style.display = "none";
+  }
+}

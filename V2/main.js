@@ -12,6 +12,51 @@ const synth = new Tone.Oscillator({
     volume: -20
 }).connect(recorder).toDestination();
 
+const getFreqname = (value) => {
+  if(value<=130){
+    return "C3"
+  }
+  else if(value>130 && value<= 146){
+    return "D3"
+  }
+  else if(value>146 && value<= 164){
+    return "E3"
+  }
+  else if(value>164 && value<= 174){
+    return "F3"
+  }
+  else if(value>174 && value<= 196){
+    return "G3"
+  }
+  else if(value>196 && value<= 220){
+    return "A3"
+  }
+  else if(value>220 && value<= 246){
+    return "B3"
+  }
+  else if(value>246 && value<= 261){
+    return "C4"
+  }
+  else if(value>261 && value<= 293){
+    return "D4"
+  }
+  else if(value>293 && value<= 329){
+    return "E4"
+  }
+  else if(value>329 && value<= 349){
+    return "F4"
+  }
+  else if(value>349 && value<= 392){
+    return "G4"
+  }
+  else if(value>392 && value<= 440){
+    return "A4"
+  }
+  else if(value>440 && value<= 493){
+    return "B4"
+  }
+}
+
 const mapVolume = (value) => {
     // set the range of the hand.stabilizedPalmPosition[0] value
     const minValue = 70;

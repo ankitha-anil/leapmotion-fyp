@@ -3,6 +3,7 @@ const playButton = document.getElementById("play-button");
 const stopButton = document.getElementById('stop-button');
 const recordButton = document.getElementById('record-button');
 const recordStopButton = document.getElementById('record-stop-button');
+const volumeProgress = document.querySelector('.volume-progress-bar > div');
 
 const recorder = new Tone.Recorder();
 
@@ -12,8 +13,19 @@ const synth = new Tone.Oscillator({
     volume: -20
 }).connect(recorder).toDestination();
 
+const mapVolume = (value) => {
+    // set the range of the hand.stabilizedPalmPosition[0] value
+    const minValue = 70;
+    const maxValue = 200;
+    // set the range of the volume value
+    const minVolume = -10;
+    const maxVolume = -100;
+    // calculate the mapped volume
+    return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
+}
+
 const getFreqname = (value) => {
-  if(value<=130){
+  if(value <= 130){
     return "C3"
   }
   else if(value>130 && value<= 146){
@@ -55,17 +67,9 @@ const getFreqname = (value) => {
   else if(value>440 && value<= 493){
     return "B4"
   }
-}
-
-const mapVolume = (value) => {
-    // set the range of the hand.stabilizedPalmPosition[0] value
-    const minValue = 70;
-    const maxValue = 200;
-    // set the range of the volume value
-    const minVolume = -10;
-    const maxVolume = -100;
-    // calculate the mapped volume
-    return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
+  else {
+    return "C5"
+  }
 }
 
 function getFrequency(handPositionX, handPositionY) {
@@ -84,41 +88,22 @@ function getFrequency(handPositionX, handPositionY) {
   //normalizedY = Math.max(0, Math.min(1, normalizedY));
   console.log("y: " + normalizedY)
   // calculate the frequency based on the normalized values
-  let frequency = 100 + 64 * Math.pow(2, (normalizedY + normalizedX));
+  let frequency = 75 + 64 * Math.pow(2, (normalizedY + normalizedX));
   console.log("frequency: "+ frequency)
   return frequency;
 }
 
 function effects(value) {
 
-  const reverb = new Tone.Freeverb({dampening: 2000, wet: 0.5, roomSize: 0.9 }).toDestination();
-  
-  // create a delay effect
-  const delay = new Tone.FeedbackDelay({delayTime: "8n", feedback: 0.8, wet: 0.9}).toDestination();
-  
-  const phaser = new Tone.Phaser({
-    frequency : 0.5,
-    octaves : 2.3,
-    Q : 8,
-    baseFrequency : 250,
-    wet : 0.3
-  }).toDestination();
-
-  const chorus = new Tone.Chorus(  {
-    frequency: 0.1,
-    delayTime: 10,
-    type: "sine",
-    depth: 1,
-    feedback: 0.4,
-    spread: 80,
-    wet: 0.9
-  }).toDestination();
-
+  const reverb = new Tone.Freeverb({ dampening: 2000, wet: 0.5, roomSize: 0.9 }).toDestination();
+  const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.8, wet: 0.9}).toDestination();
+  const phaser = new Tone.Phaser({ frequency : 0.5, octaves : 2.3, Q : 8, baseFrequency : 250, wet : 0.3}).toDestination();
+  const chorus = new Tone.Chorus({ frequency: 0.1, delayTime: 10, type: "sine", depth: 1, feedback: 0.4, spread: 80, wet: 0.9}).toDestination();
   const panner = new Tone.Panner(-0.5).toDestination();
   const vibrato = new Tone.Vibrato(4, 0.5).toDestination();
-
+  
+  //  connect the synth to the effects
   if(value == "effect-1"){
-    //  connect the synth to the effects
     synth.disconnect();
     synth.type = "sine";
     synth.volume = -20;
@@ -160,10 +145,11 @@ const mapLength = (value) => {
   // set the range of the volume value
   const minVolume = 60;
   const maxVolume = 10;
-
   // calculate the mapped volume
   return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
 }
+const notes = document.querySelectorAll('.note');
+
 
 const controller = new Leap.Controller({
     host: "127.0.0.1",
@@ -171,19 +157,27 @@ const controller = new Leap.Controller({
   });
   controller.connect();
 
-     // Listen for frame data from the Leap Motion controller
+  // Listen for frame data from the Leap Motion controller
   controller.on("frame", frame => {
         //gainNode.gain.rampTo(1, 0.1);
         for(var i = 0; i < frame.hands.length; i++){
           var hand = frame.hands[i];
+
             if(hand.type === "right"){
                 synth.frequency.value = getFrequency(hand.stabilizedPalmPosition[0], hand.stabilizedPalmPosition[1]);
-               // document.getElementById("frequency").innerHTML = `Frequency: ${getFreqname(synth.frequency.value)}`;
+                // document.getElementById("frequency").innerHTML = `Frequency: ${getFreqname(synth.frequency.value)}`;
+                notes.forEach(note => {
+                  console.log(note.id);
+                  document.getElementById(note.id).classList.remove('note-pressed');
+                  //button.classList.add('c-button_white-ghost-reverse');
+                });
+                document.getElementById(getFreqname(synth.frequency.value)).className = "note note-pressed";
               }
             else if(hand.type === "left"){
                 var volume = hand.stabilizedPalmPosition[1];
-                synth.volume.value = mapVolume(hand.stabilizedPalmPosition[1]);
-               // document.getElementById("volume").innerHTML = `Volume: ${mapVolume(synth.volume.value)}`;
+                synth.volume.value = Math.round(mapVolume(volume));
+                 document.getElementById("volume").innerHTML = `Volume: ${135 - Math.round(mapVolume(synth.volume.value))}`;
+                volumeProgress.style.width = 135 - Math.round(mapVolume(synth.volume.value)) + '%';
               }
         }
     });
@@ -217,75 +211,11 @@ recordStopButton.addEventListener('click', () => {
       // download the recording by creating an anchor element and blob url
       const url = URL.createObjectURL(recording);
       const anchor = document.createElement("a");
-      anchor.download = "recording.webm";
+      anchor.download = "Theremin Recording.webm";
       anchor.href = url;
       anchor.click();
     }, 1000);
 });
-
-
-const canvas = document.querySelector('canvas');
-canvas.width = window.outerWidth/1.5;
-canvas.height = window.outerHeight/2;
-
-class Wave {
-  constructor(
-    canv,
-    maxAmplitude = 100,
-    length = 10,
-    frequency = 8,
-    bgOpacity = 0.07,
-    y,
-  ) {
-    this.canvas = canv;
-    this.ctx = this.canvas.getContext('2d');
-    this.maxAmplitude = maxAmplitude;
-    this.amplitude = 0;
-    this.length = length;
-    this.frequency = frequency;
-    this.increment = Math.random() * 360;
-    this.bgOpacity = bgOpacity;
-    this.y = y || this.canvas.height / 2;
-
-    this.frameCallback = () => {
-      this.draw(this.ctx);
-      requestAnimationFrame(this.frameCallback);
-    };
-  }
-
-  draw(c) {
-    c.beginPath();
-
-    this.ctx.fillStyle = `rgba(1,1,1,0.1)`;
-    this.ctx.strokeStyle = `hsl(${this.increment * 20}, 80%, 70%)`;
-
-    c.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    c.moveTo(1, this.canvas.height / 2);
-
-    for (let i = 0; i < this.canvas.width; i += 1) {
-      c.lineTo(
-        i,
-        this.y + Math.sin(i /this.length+ this.increment) * this.amplitude,
-      );
-    }
-
-    c.stroke();
-    c.closePath();
-
-    this.length = mapLength(synth.frequency.value);
-    this.increment -= synth.frequency.value/10000;
-    this.amplitude = synth.volume.value * 2.5;
-  }
-
-  animate() {
-    this.frameCallback();
-  }
-}
-
-const wave = new Wave(canvas, 150, 20, 0.03);
-wave.animate();
-
 
 // Get the modal
 var infoModal = document.getElementById("InfoModal");
@@ -369,4 +299,11 @@ function showSlides(n) {
   slides[slideIndex-1].style.display = "block";  
   dots[slideIndex-1].className += " active";
 }
+
+// Update the current slider value (each time you drag the slider handle)
+volumeNoteSlider.addEventListener('input', function() {
+  console.log(value);
+  var value = this.value;
+  volumeNoteLabel.textContent = value;
+});
 

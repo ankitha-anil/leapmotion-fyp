@@ -198,10 +198,9 @@ canvas{
 }
 
 /* Slideshow container */
+/* Slideshow container */
 .slideshow-container {
   max-width: 1000px;
-  position: relative;
-  margin: auto;
 }
 
 /* Slideshow container */
@@ -214,7 +213,7 @@ canvas{
   align-items: space-evenly;
 }
 .slideshow-images img{
-  padding: 25px;
+  padding: 15px;
 }
 
 .slideshow-heading{
@@ -245,12 +244,12 @@ canvas{
 
 /* Position the "next button" to the right */
 .next {
-  right: 15%;
+  right: 9%;
   top: 40%;
   border-radius: 3px 0 0 3px;
 }
 .prev {
-  left: 15%;
+  left: 9%;
   top: 40%;
   border-radius: 3px 0 0 3px;
 }
@@ -259,7 +258,6 @@ canvas{
 .prev:hover, .next:hover {
   color: rgba(0,0,0,0.8);
 }
-
 /* The dots/bullets/indicators */
 .dot {
   cursor: pointer;

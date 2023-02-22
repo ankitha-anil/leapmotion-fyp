@@ -9,7 +9,7 @@
 
 <link rel="stylesheet" type="text/css" href="main.css">
 
-<title>Theremin with Leap Motion</title>
+<title>Theremin with Leap Motion - Visual Aid</title>
 </head>
 
 <body>
@@ -71,7 +71,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class = "mySlides fade">
                         <div class = "slideshow-images"> 
                             <img src="/images/left.jpg" alt="Left" width="450">
@@ -99,13 +98,40 @@
                     <span class="dot" onclick="currentSlide(2)"></span> 
                     <span class="dot" onclick="currentSlide(3)"></span> 
                 </div>
-
                 <button class="c-button close">Begin</button>
             </div>
+        </div>
+
+    <div id="volume" class ="heading" >Volume</div>
+    <div class="volume-progress-bar">
+        <div>
+        </div>
     </div>
-    <canvas></canvas>
-    <div id="frequency"></div>
-    <div id="volume"></div>
+
+    <div id="frequency" class ="heading" >Notes</div>
+    <div class="frequency-progress-bar">
+        <div>
+        </div>
+    </div>
+    <div class = "keys">
+        <div class="note" id="C4">C4</div> 
+        <div class="note" id="D4">D4</div> 
+        <div class="note" id="E4">E4</div> 
+        <div class="note" id="F4">F4</div> 
+        <div class="note" id="G4">G4</div> 
+        <div class="note" id="A4">A4</div> 
+        <div class="note" id="B4">B4</div> 
+        <div class="note" id="C5">C5</div> 
+    </div>
+    <div class = "keys">
+        <div class="note" id="C3">C3</div> 
+        <div class="note" id="D3">D3</div> 
+        <div class="note" id="E3">E3</div> 
+        <div class="note" id="F3">F3</div> 
+        <div class="note" id="G3">G3</div> 
+        <div class="note" id="A3">A3</div> 
+        <div class="note" id="B3">B3</div> 
+    </div>
     <div id="controls">
         <div id="record" class="row">     
             <button id="record-button" class = "c-button c-button_white-ghost"><i class="fa fa-microphone"></i></button>

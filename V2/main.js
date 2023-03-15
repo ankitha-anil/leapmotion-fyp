@@ -13,16 +13,6 @@ const synth = new Tone.Oscillator({
     volume: -20
 }).connect(recorder).toDestination();
 
-const mapVolume = (value) => {
-    // set the range of the hand.stabilizedPalmPosition[0] value
-    const minValue = 70;
-    const maxValue = 200;
-    // set the range of the volume value
-    const minVolume = -10;
-    const maxVolume = -100;
-    // calculate the mapped volume
-    return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
-}
 
 const getFreqname = (value) => {
   if(value <= 130){
@@ -73,22 +63,8 @@ const getFreqname = (value) => {
 }
 
 function getFrequency(handPositionX, handPositionY) {
-  const minX = 50; // minimum value for X axis
-  const maxX = 200; // maximum value for X axis
-  const minY = 70; // minimum value for Y axis
-  const maxY = 500; // maximum value for Y axis
-  
-  // normalize the X axis
-  let normalizedX = (handPositionX - minX) * 2 / (maxX - minX);
-  //normalizedX = Math.max(0, Math.min(1, normalizedX));
-  console.log("x: " + normalizedX)
-
-  // normalize the Y axis
-  let normalizedY = (handPositionY - minY) * 2 / (maxY - minY);
-  //normalizedY = Math.max(0, Math.min(1, normalizedY));
-  console.log("y: " + normalizedY)
-  // calculate the frequency based on the normalized values
-  let frequency = 75 + 64 * Math.pow(2, (normalizedY + normalizedX));
+  //calculate the frequency based on the normalized values
+  let frequency = (250 * (handPositionX/2)) + (250 * handPositionY*2) ;
   console.log("frequency: "+ frequency)
   return frequency;
 }
@@ -138,18 +114,7 @@ function effects(value) {
   } 
 }
 
-const mapLength = (value) => {
-  // set the range of the hand.stabilizedPalmPosition[0] value
-  const minValue = -200;
-  const maxValue = 200;
-  // set the range of the volume value
-  const minVolume = 60;
-  const maxVolume = 10;
-  // calculate the mapped volume
-  return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
-}
 const notes = document.querySelectorAll('.note');
-
 
 const controller = new Leap.Controller({
     host: "127.0.0.1",
@@ -159,25 +124,23 @@ const controller = new Leap.Controller({
 
   // Listen for frame data from the Leap Motion controller
   controller.on("frame", frame => {
-        //gainNode.gain.rampTo(1, 0.1);
         for(var i = 0; i < frame.hands.length; i++){
           var hand = frame.hands[i];
-
+          var iBox = frame.interactionBox;
             if(hand.type === "right"){
-                synth.frequency.value = getFrequency(hand.stabilizedPalmPosition[0], hand.stabilizedPalmPosition[1]);
-                // document.getElementById("frequency").innerHTML = `Frequency: ${getFreqname(synth.frequency.value)}`;
+                var normalizedPoint = iBox.normalizePoint(hand.stabilizedPalmPosition, true);
+                synth.frequency.value = getFrequency(normalizedPoint[0], normalizedPoint[1]);
                 notes.forEach(note => {
-                  console.log(note.id);
                   document.getElementById(note.id).classList.remove('note-pressed');
-                  //button.classList.add('c-button_white-ghost-reverse');
                 });
                 document.getElementById(getFreqname(synth.frequency.value)).className = "note note-pressed";
               }
             else if(hand.type === "left"){
-                var volume = hand.stabilizedPalmPosition[1];
-                synth.volume.value = Math.round(mapVolume(volume));
-                 document.getElementById("volume").innerHTML = `Volume: ${135 - Math.round(mapVolume(synth.volume.value))}`;
-                volumeProgress.style.width = 135 - Math.round(mapVolume(synth.volume.value)) + '%';
+                var normalizedPoint = iBox.normalizePoint(hand.stabilizedPalmPosition, true);
+                synth.volume.value = - 10 - 50 * normalizedPoint[1];
+                var volume = Math.round(100 * normalizedPoint[1]);
+                document.getElementById("volume").innerHTML = `Volume: ${100 - volume}`;
+                volumeProgress.style.width = (100-volume) + '%';
               }
         }
     });
@@ -302,7 +265,7 @@ function showSlides(n) {
 
 // Update the current slider value (each time you drag the slider handle)
 volumeNoteSlider.addEventListener('input', function() {
-  console.log(value);
+
   var value = this.value;
   volumeNoteLabel.textContent = value;
 });

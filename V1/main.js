@@ -12,63 +12,19 @@ const synth = new Tone.Oscillator({
     volume: -20
 }).connect(recorder).toDestination();
 
-const mapVolume = (value) => {
-    // set the range of the hand.stabilizedPalmPosition[0] value
-    const minValue = 70;
-    const maxValue = 200;
-    // set the range of the volume value
-    const minVolume = -10;
-    const maxVolume = -100;
-    // calculate the mapped volume
-    return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
-}
-
 function getFrequency(handPositionX, handPositionY) {
-  const minX = 50; // minimum value for X axis
-  const maxX = 200; // maximum value for X axis
-  const minY = 70; // minimum value for Y axis
-  const maxY = 500; // maximum value for Y axis
-  
-  // normalize the X axis
-  let normalizedX = (handPositionX - minX) * 2 / (maxX - minX);
-  //normalizedX = Math.max(0, Math.min(1, normalizedX));
-  console.log("x: " + normalizedX)
-
-  // normalize the Y axis
-  let normalizedY = (handPositionY - minY) * 2 / (maxY - minY);
-  //normalizedY = Math.max(0, Math.min(1, normalizedY));
-  console.log("y: " + normalizedY)
-  // calculate the frequency based on the normalized values
-  let frequency = 100 + 64 * Math.pow(2, (normalizedY + normalizedX));
+  //calculate the frequency based on the normalized values
+  let frequency = (250 * (handPositionX/2)) + (250 * handPositionY*2) ;
   console.log("frequency: "+ frequency)
   return frequency;
 }
 
 function effects(value) {
 
-  const reverb = new Tone.Freeverb({dampening: 2000, wet: 0.5, roomSize: 0.9 }).toDestination();
-  
-  // create a delay effect
-  const delay = new Tone.FeedbackDelay({delayTime: "8n", feedback: 0.8, wet: 0.9}).toDestination();
-  
-  const phaser = new Tone.Phaser({
-    frequency : 0.5,
-    octaves : 2.3,
-    Q : 8,
-    baseFrequency : 250,
-    wet : 0.3
-  }).toDestination();
-
-  const chorus = new Tone.Chorus(  {
-    frequency: 0.1,
-    delayTime: 10,
-    type: "sine",
-    depth: 1,
-    feedback: 0.4,
-    spread: 80,
-    wet: 0.9
-  }).toDestination();
-
+  const reverb = new Tone.Freeverb({ dampening: 2000, wet: 0.5, roomSize: 0.9 }).toDestination();
+  const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.8, wet: 0.9}).toDestination();
+  const phaser = new Tone.Phaser({ frequency : 0.5, octaves : 2.3, Q : 8, baseFrequency : 250, wet : 0.3}).toDestination();
+  const chorus = new Tone.Chorus({ frequency: 0.1, delayTime: 10, type: "sine", depth: 1, feedback: 0.4, spread: 80, wet: 0.9}).toDestination();
   const panner = new Tone.Panner(-0.5).toDestination();
   const vibrato = new Tone.Vibrato(4, 0.5).toDestination();
 
@@ -108,17 +64,8 @@ function effects(value) {
   } 
 }
 
-const mapLength = (value) => {
-  // set the range of the hand.stabilizedPalmPosition[0] value
-  const minValue = -200;
-  const maxValue = 200;
-  // set the range of the volume value
-  const minVolume = 60;
-  const maxVolume = 10;
-
-  // calculate the mapped volume
-  return (value - minValue) * (maxVolume - minVolume) / (maxValue - minValue) + minVolume;
-}
+var volume; 
+var length;
 
 const controller = new Leap.Controller({
     host: "127.0.0.1",
@@ -128,17 +75,18 @@ const controller = new Leap.Controller({
 
      // Listen for frame data from the Leap Motion controller
   controller.on("frame", frame => {
-        //gainNode.gain.rampTo(1, 0.1);
         for(var i = 0; i < frame.hands.length; i++){
           var hand = frame.hands[i];
+          var iBox = frame.interactionBox;
             if(hand.type === "right"){
-                synth.frequency.value = getFrequency(hand.stabilizedPalmPosition[0], hand.stabilizedPalmPosition[1]);
-               // document.getElementById("frequency").innerHTML = `Frequency: ${getFreqname(synth.frequency.value)}`;
+                var normalizedPoint = iBox.normalizePoint(hand.stabilizedPalmPosition, true);
+                synth.frequency.value = getFrequency(normalizedPoint[0], normalizedPoint[1]);
+                length = (2 - normalizedPoint[0] - normalizedPoint[1]);
               }
             else if(hand.type === "left"){
-                var volume = hand.stabilizedPalmPosition[1];
-                synth.volume.value = mapVolume(hand.stabilizedPalmPosition[1]);
-               // document.getElementById("volume").innerHTML = `Volume: ${mapVolume(synth.volume.value)}`;
+                var normalizedPoint = iBox.normalizePoint(hand.stabilizedPalmPosition, true);
+                synth.volume.value = - 10 - 50 * normalizedPoint[1];
+                volume = (1 - normalizedPoint[1]);
               }
         }
     });
@@ -186,7 +134,7 @@ canvas.height = window.outerHeight/2;
 class Wave {
   constructor(
     canv,
-    maxAmplitude = 100,
+    maxAmplitude = 200,
     length = 10,
     frequency = 8,
     bgOpacity = 0.07,
@@ -198,7 +146,7 @@ class Wave {
     this.amplitude = 0;
     this.length = length;
     this.frequency = frequency;
-    this.increment = Math.random() * 360;
+    this.color = Math.random() * 360;
     this.bgOpacity = bgOpacity;
     this.y = y || this.canvas.height / 2;
 
@@ -212,7 +160,7 @@ class Wave {
     c.beginPath();
 
     this.ctx.fillStyle = `rgba(1,1,1,0.1)`;
-    this.ctx.strokeStyle = `hsl(${this.increment * 20}, 80%, 70%)`;
+    this.ctx.strokeStyle = `hsl(${this.color}, 80%, 70%)`;
 
     c.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -220,17 +168,16 @@ class Wave {
 
     for (let i = 0; i < this.canvas.width; i += 1) {
       c.lineTo(
-        i,
-        this.y + Math.sin(i /this.length+ this.increment) * this.amplitude,
+        i, this.y + Math.sin(i/this.length) * this.amplitude,
       );
     }
 
     c.stroke();
     c.closePath();
 
-    this.length = mapLength(synth.frequency.value);
-    this.increment -= synth.frequency.value/10000;
-    this.amplitude = synth.volume.value * 2.5;
+    this.length = length * 100;
+    this.amplitude = volume * 150;
+    this.color = length * 200;
   }
 
   animate() {
@@ -240,8 +187,6 @@ class Wave {
 
 const wave = new Wave(canvas, 150, 20, 0.03);
 wave.animate();
-
-
 // Get the modal
 var infoModal = document.getElementById("InfoModal");
 var infoBtn = document.getElementById("info");
